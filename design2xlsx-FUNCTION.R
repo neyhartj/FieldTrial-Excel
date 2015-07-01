@@ -14,6 +14,7 @@
 #Upcoming features:
 
 
+
 ##### Function creation and usage #####
 # Function creation and argument designation
 design2xlsx <- function (
@@ -86,9 +87,7 @@ design2xlsx <- function (
   if (!is.logical(FieldDim)) stop("The FieldDim argument is not of class logical")
   #NumDupl errors
   if (!is.logical(NumDupl)) stop("The NumDupl argument is not of class logical")
-  #PlotLayoutLines errors
-  if (!is.logical(PlotLayoutLines)) stop("The PlotLayoutLines argument is not of class logical")
-  
+
   #Test if the list is just a list of one design plan, or is a list of lists. If it is the former, add another level to the list for compliance
   if (is.factor(Designs_List[[1]][[1]])) {
     Designs_List <- list(Designs_List)
@@ -103,12 +102,19 @@ design2xlsx <- function (
   #Create a list for the sheets
   sheetlist <- list()
   
+  #If the SheetTitle is not user-defined, set it to the default
+  if (is.null(SheetTitle)) {
+    for (l in 1:length(Designs_List)) {
+    SheetTitle[l] <- as.character(unique(Designs_List[[l]][[1]]$trial))
+    }
+  }
+  
   #Loop through each design output in the list
-  #for (l in 1:length(Designs_List)) { 
+  for (l in 1:length(Designs_List)) { 
   
     #If the DgnNames vector is not defined, set it to the default
     if (is.null(DgnNames)) {
-      DgnNames <- c(1,4,12,11,6,7,8,9,10,5,14)
+      DgnNames <- c(1,4,12,11,6,7,8,9,10,14)
     }
     
     #Rename the .dgn data.frame in the list member l so that there are easier to work with
@@ -158,12 +164,6 @@ design2xlsx <- function (
       #Create the baseline cellstyle
       CS <- CellStyle(wb = pdwb)
     
-    
-      #Create the title cellstyle
-      #If the SheetTitle is not user-defined, set it to the default
-      if (is.null(SheetTitle)) {
-        SheetTitle <- rep(as.character(unique(Designs_List[[l]][[1]]$trial)), length(Designs_List))
-      }
       
       #Title Cellstyle
       CS <- CS + Font(wb = pdwb, color = "#C65911", heightInPoints = 26, name = "Times New Roman", isBold = TRUE, underline = 1)
@@ -182,11 +182,12 @@ design2xlsx <- function (
     
         #Create the cellstyle for the first two subtitles
         CS <- CS + Font(wb = pdwb, color = "#0070C0", heightInPoints = 14, name = "Times New Roman", isBold = TRUE)
-        
+    
+    
         #Check if the subtitle is wanted
         if (NumLocs == TRUE) {
         #Number of locations
-          rows <- createRow(sheet = sheetlist[[l]], rowIndex = 2) #This needs to be changed
+          rows <- createRow(sheet = sheetlist[[l]], rowIndex = 2)
           pf_cell <- createCell(row = rows, colIndex = 2)
           setCellValue(pf_cell[[1,1]], value = paste(length(Designs_List), "Locations:", paste(names(Designs_List), collapse = ", "), sep = " "))
           setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -196,7 +197,7 @@ design2xlsx <- function (
         #Check if the subtitle is wanted
         if (DgnType == TRUE) {
           #Type of design (ie aibd, madii, rcbd)
-          rows <- createRow(sheet = sheetlist[[l]], rowIndex = 3)#This needs to be changed
+          rows <- createRow(sheet = sheetlist[[l]], rowIndex = 3 + (sum(Subtitles[1]) - 1))#This needs to be changed
           pf_cell <- createCell(row = rows, colIndex = 2)
           setCellValue(pf_cell[[1,1]], value = paste("Design:", toupper(substring(text = names(Designs_List[[l]])[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(Designs_List[[l]])[1])[[1]][1]-1)), sep = " "))
           setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -208,7 +209,7 @@ design2xlsx <- function (
         #Check if subtitle is wanted
         if (TotalPlots == TRUE) {
           #Number of test plots
-          rows <- createRow(sheet = sheetlist[[l]], rowIndex = 4)#This needs to be changed
+          rows <- createRow(sheet = sheetlist[[l]], rowIndex = 3 + (sum(Subtitles[1:2]) - 1))#This needs to be changed
           pf_cell <- createCell(row = rows, colIndex = 2)
           setCellValue(pf_cell[[1,1]], value = paste(dim(Designs_List[[l]][[1]])[1], "Total test plots", sep = " "))
           setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -218,7 +219,7 @@ design2xlsx <- function (
         #Check if subtitle is wanted
         if (FieldDim == TRUE) {
           #Dimensions of plot
-          rows <- createRow(sheet = sheetlist[[l]], rowIndex = 5)#This needs to be changed
+          rows <- createRow(sheet = sheetlist[[l]], rowIndex = 3 + (sum(Subtitles[1:3]) - 1))#This needs to be changed
           pf_cell <- createCell(row = rows, colIndex = 2)
           setCellValue(pf_cell[[1,1]], value = paste(max(Designs_List[[l]][[1]]$row), "rows x", max(Designs_List[[l]][[1]]$column), "columns", sep = " "))
           setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -227,10 +228,10 @@ design2xlsx <- function (
         #Check if the subtitle is wanted
         if (NumDupl == TRUE) {
         #If statement to check if the duplicates column is actually present (it potentially could not be present)
-          if (is.null(x = Designs_List[[l]][[1]]$duplicates)) {
-            #If the duplicates column is present, a number of duplicates cell group will be added, then the number of checks cells
+          if (!is.null(x = Designs_List[[l]][[1]]$duplicates)) {
+            #If the duplicates column is present, a number of duplicates cell group will be added
             #Number of duplicates
-            rows <- createRow(sheet = sheetlist[[l]], rowIndex = 6) #This needs to be changed
+            rows <- createRow(sheet = sheetlist[[l]], rowIndex = 3 + (sum(Subtitles[1:4]) - 1)) #This needs to be changed
             pf_cell <- createCell(row = rows, colIndex = 2)
             setCellValue(pf_cell[[1,1]], value = paste(sum(Designs_List[[l]][[1]]$duplicates == "D"), "duplicate entries", sep = " "))
             setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -239,12 +240,11 @@ design2xlsx <- function (
     
         #This subtitle is always included
         #Cell specifying Number of checks
-        rows <- createRow(sheet = sheetlist[[l]], rowIndex = 7)#This needs to be changed
+        rows <- createRow(sheet = sheetlist[[l]], rowIndex = 3 + (sum(Subtitles[1:5]) - 1))#This needs to be changed
         pf_cell <- createCell(row = rows, colIndex = 2)
         setCellValue(pf_cell[[1,1]], value = paste(sum(Designs_List[[l]][[1]]$line.code != 0), "check plots:", sep = " "))
         setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS + Font(wb = pdwb, heightInPoints = 14, name = "Times New Roman", isItalic = TRUE, isBold = TRUE))
         
-    
         
     #Create separately formatted cells for the checks
     #Create the cellstyle
@@ -259,7 +259,7 @@ design2xlsx <- function (
     }
     
     for (i in 1:dim(checks_df)[1]) { #For loop to iterate through the number of checks
-      rows <- createRow(sheet = sheetlist[[l]], rowIndex = 7 + i) #This 7 needs to be substituted with the number of rows requested in arguments
+      rows <- createRow(sheet = sheetlist[[l]], rowIndex = (sum(Subtitles) + 2) + i) #This 7 needs to be substituted with the number of rows requested in arguments
       checksumcell <- createCell(row = rows, colIndex = 3)
       checknamecell <- createCell(row = rows, colIndex = 4)
       setCellValue(checksumcell[[1,1]], value = sum(Designs_List[[l]][[1]]$line.code == i))
@@ -305,7 +305,7 @@ design2xlsx <- function (
     }
     
     #Add the dgn data.frame
-    addDataFrame(x = design_tempdf, sheet = sheetlist[[l]], col.names = TRUE, row.names = FALSE, startRow = 7 + dim(checks_df)[1] + 2, colnamesStyle = CS)  #This 7 needs to be substituted with the number of rows requested in arguments
+    addDataFrame(x = design_tempdf, sheet = sheetlist[[l]], col.names = TRUE, row.names = FALSE, startRow = (sum(Subtitles) + 2) + dim(checks_df)[1] + 2, colnamesStyle = CS)  #This 7 needs to be substituted with the number of rows requested in arguments
     
     #Write the plot layout data to the worksheet
     addDataFrame(x = as.data.frame(Designs_List[[l]][[3]]), sheet = sheetlist[[l]], col.names = FALSE, row.names = FALSE, startRow = 2, startColumn = dim(design_tempdf)[2] + 4)
@@ -317,47 +317,78 @@ design2xlsx <- function (
     
     ##### Borders, highlighting, and other formatting #####
     
-    #Highlighting the cells in the design data.frame that are checks
-    #First need to redesignate the cellstyle for checks to eliminate boldness
-    CS <- CellStyle(wb = pdwb)
+    #Only perform highlighting if the line.name column is present
+    if (!is.na(match(12, DgnNames))) {
     
-    #Next, iterate through all rows of the design data.frame, check to see if the cell value is a check, then assign the appropriate cell style
-    for (n in 1:dim(Designs_List[[l]][[1]])[1]) { #For loop to iterate through every row in the design data.frame
-      rows <- getRows(sheet = sheetlist[[l]], rowIndex = n + 7 + dim(checks_df)[1] + 2) # 7 = number of rows taken up by pertinant primary info, dim(checks_df) = rows taken up by checks, 2 = space between checks and the data.frame  #This 7 needs to be substituted with the number of rows requested in arguments
-      pf_cell <- getCells(row = rows, colIndex = c(2:5)) #MAY NEED TO CHANGE COLUMN INDEX FOR SOFT-CODING
-      pf_value <- getCellValue(cell = pf_cell[[2]])
+      #Highlighting the cells in the design data.frame that are checks
+      #First need to redesignate the cellstyle for checks to eliminate boldness
+      CS <- CellStyle(wb = pdwb)
       
-      if (sum(pf_value == checks_df[,2]) == 1) { #If statement to ask whether the entry names matches any of the checks
-        setCellStyle(cell = pf_cell[[1]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white")) #If the value of the cell matches any of the names of csCheckdflist (and therefore any of the checks), the cellstyle will be set to the style designated for that check
-        setCellStyle(cell = pf_cell[[2]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white"))
-        setCellStyle(cell = pf_cell[[3]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white"))
-        setCellStyle(cell = pf_cell[[4]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white"))
+      #Next, iterate through all rows of the design data.frame, check to see if the cell value is a check, then assign the appropriate cell style
+      for (n in 1:dim(Designs_List[[l]][[1]])[1]) { #For loop to iterate through every row in the design data.frame
+        rows <- getRows(sheet = sheetlist[[l]], rowIndex = n + (sum(Subtitles) + 2) + dim(checks_df)[1] + 2) # 7 = number of rows taken up by pertinant primary info, dim(checks_df) = rows taken up by checks, 2 = space between checks and the data.frame  #This 7 needs to be substituted with the number of rows requested in arguments
+        #If line.code, line.name, and plot are not together, then only highlight line.name
+        if (!is.na(match(NA, match(c(4,11,12), DgnNames)) > 0) || max(match(c(4,11,12), DgnNames)) - min(match(c(4,11,12), DgnNames)) > 2) {
+          colin <- match(12, DgnNames)
+          pf_cell <- getCells(row = rows, colIndex = sort(colin))
+          pf_value <- getCellValue(cell = pf_cell[[1]])
+          
+          #Highlight just line.name
+          if (sum(pf_value == checks_df[,2]) == 1) { #If statement to ask whether the entry names matches any of the checks
+            setCellStyle(cell = pf_cell[[1]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white")) #If the value of the cell matches any of the names of csCheckdflist (and therefore any of the checks), the cellstyle will be set to the style designated for that check
+          }
+        } else {
+          #If source is not included, only highlight line.code, line.name, and plot
+          if (Source == FALSE) {
+            colin <- match(c(4,11,12), DgnNames)
+            pf_cell <- getCells(row = rows, colIndex = sort(colin)) 
+            pf_value <- getCellValue(cell = pf_cell[[2]])
+            
+            if (sum(pf_value == checks_df[,2]) == 1) { #If statement to ask whether the entry names matches any of the checks
+              setCellStyle(cell = pf_cell[[1]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white")) #If the value of the cell matches any of the names of csCheckdflist (and therefore any of the checks), the cellstyle will be set to the style designated for that check
+              setCellStyle(cell = pf_cell[[2]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white"))
+              setCellStyle(cell = pf_cell[[3]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white"))
+            }
+          } else {
+            #If Source is true and the three parameters are together, then highlight all four
+            colin <- append(x = match(c(4,11,12), DgnNames), values = max(match(c(4,11,12), DgnNames)) + 1)
+            pf_cell <- getCells(row = rows, colIndex = sort(colin)) 
+            pf_value <- getCellValue(cell = pf_cell[[2]])
+            
+            if (sum(pf_value == checks_df[,2]) == 1) { #If statement to ask whether the entry names matches any of the checks
+              setCellStyle(cell = pf_cell[[1]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white")) #If the value of the cell matches any of the names of csCheckdflist (and therefore any of the checks), the cellstyle will be set to the style designated for that check
+              setCellStyle(cell = pf_cell[[2]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white"))
+              setCellStyle(cell = pf_cell[[3]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white"))
+              setCellStyle(cell = pf_cell[[4]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(pf_value == checks_df[,2])], backgroundColor = "white"))
+            }
+          }
+        }          
       }
-    }
-    
-    #Highlighting check positions in the ploy.layout data.frame
-    for (r in 1:(dim(Designs_List[[l]][[3]])[1]-1)) { #For loop to cycle through the number of rows
-      for (k in 1:(dim(Designs_List[[l]][[3]])[2]-1)) { #For loop to cycle through the number of columns
-        rows <- getRows(sheet = sheetlist[[l]], rowIndex = r + 1) #
-        pf_cell <- getCells(row = rows, colIndex = (k + dim(design_tempdf)[2] + 4)) #MAY NEED TO CHANGE COLUMN INDEX FOR SOFT-CODING
-        pf_value <- getCellValue(cell = pf_cell[[1]])
-        
-        if (sum(Designs_List[[l]][[1]]$line.name[which(Designs_List[[l]][[1]]$plot == pf_value)] == checks_df[,2]) == 1) {
-          setCellStyle(cell = pf_cell[[1]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(Designs_List[[l]][[1]]$line.name[which(Designs_List[[l]][[1]]$plot == pf_value)] == checks_df[,2])], backgroundColor = "white"))  
-        } #Close the if statement
-      }} #Close the for loops
-    
-    #Highlighting check positions in the check.layout data.frame
-    for (r in 1:(dim(Designs_List[[l]][[4]])[1]-1)) { #For loop to cycle through the number of rows
-      for (k in 1:(dim(Designs_List[[l]][[4]])[2]-1)) { #For loop to cycle through the number of columns
-        rows <- getRows(sheet = sheetlist[[l]], rowIndex = (r + dim(Designs_List[[l]][[3]])[1] + 4)) #
-        pf_cell <- getCells(row = rows, colIndex = (k + dim(design_tempdf)[2] + 4)) #MAY NEED TO CHANGE COLUMN INDEX FOR SOFT-CODING
-        pf_value <- getCellValue(cell = pf_cell[[1]])
-        
-        if (pf_value != 0) { #If statement to proceed on the condition that the value is not 0 (and is therefore a check)
-          setCellStyle(cell = pf_cell[[1]], cellStyle = CS + Fill(foregroundColor = CheckCol[as.numeric(pf_value)], backgroundColor = "white"))
-        } #Close the if statement
-      }} #Close the for loops
+      
+      #Highlighting check positions in the ploy.layout data.frame
+      for (r in 1:(dim(Designs_List[[l]][[3]])[1]-1)) { #For loop to cycle through the number of rows
+        for (k in 1:(dim(Designs_List[[l]][[3]])[2]-1)) { #For loop to cycle through the number of columns
+          rows <- getRows(sheet = sheetlist[[l]], rowIndex = r + 1) #
+          pf_cell <- getCells(row = rows, colIndex = (k + dim(design_tempdf)[2] + 4)) #MAY NEED TO CHANGE COLUMN INDEX FOR SOFT-CODING
+          pf_value <- getCellValue(cell = pf_cell[[1]])
+          
+          if (sum(Designs_List[[l]][[1]]$line.name[which(Designs_List[[l]][[1]]$plot == pf_value)] == checks_df[,2]) == 1) {
+            setCellStyle(cell = pf_cell[[1]], cellStyle = CS + Fill(foregroundColor = CheckCol[which(Designs_List[[l]][[1]]$line.name[which(Designs_List[[l]][[1]]$plot == pf_value)] == checks_df[,2])], backgroundColor = "white"))  
+          } #Close the if statement
+        }} #Close the for loops
+      
+      #Highlighting check positions in the check.layout data.frame
+      for (r in 1:(dim(Designs_List[[l]][[4]])[1]-1)) { #For loop to cycle through the number of rows
+        for (k in 1:(dim(Designs_List[[l]][[4]])[2]-1)) { #For loop to cycle through the number of columns
+          rows <- getRows(sheet = sheetlist[[l]], rowIndex = (r + dim(Designs_List[[l]][[3]])[1] + 4)) #
+          pf_cell <- getCells(row = rows, colIndex = (k + dim(design_tempdf)[2] + 4)) #MAY NEED TO CHANGE COLUMN INDEX FOR SOFT-CODING
+          pf_value <- getCellValue(cell = pf_cell[[1]])
+          
+          if (pf_value != 0) { #If statement to proceed on the condition that the value is not 0 (and is therefore a check)
+            setCellStyle(cell = pf_cell[[1]], cellStyle = CS + Fill(foregroundColor = CheckCol[as.numeric(pf_value)], backgroundColor = "white"))
+          } #Close the if statement
+        }} #Close the for loops
+    } #Close the initial if statement
     
     
     #Manipulating the blocks created in the design
@@ -489,16 +520,15 @@ design2xlsx <- function (
       
     
   
-  #} #Close the per-design list item for loop
-  ##### Proving Grounds ####
-  
-  
-  
+  } #Close the per-design list for loop
+
+
+
   ##### Closing time #####
   #Save the workbook to the disk
   saveWorkbook(wb = pdwb, file = filename)
   
   
-# } #Close the function
+} #Close the function
   
 

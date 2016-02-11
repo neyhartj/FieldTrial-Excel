@@ -1,26 +1,29 @@
 ###
-#Title: Plot design output to formatted Excel file
-#Working function name: design2xlsx
-#Author: Jeff Neyhart
-#Purpose: This code takes the output from the FldTrial package and creates a formatted Excel file wherein the first three data.frames 
-##are positioned for effective use by the U of M Barley Breeding Group. This code is meant to be an extension of that package
-#Version: 1.6
-#Now on GitHub!
-#Latest updates:
-## Version 1.6: Improved functionality with RCBD designs and wrapped up the script into a function
-## v 1.5.3: Cleaned up functionality for adding the .dgn data.frame
-## v 1.5.2: Cleaned up variables
-## v 1.5.1: Added functionality to highlight the checks in the design data.frame, the plot layout data.frame, and the check.layout data.frame
-#Upcoming features:
+# Title: Plot design output to formatted Excel file
+# Working function name: design2xlsx
+# Author: Jeff Neyhart
+# Purpose: This code takes the output from the FldTrial package and creates a formatted Excel file wherein the first three data.frames 
+## are positioned for effective use by the U of M Barley Breeding Group. This code is meant to be an extension of that package
 
-
+# # Test inputs
+# filename = NULL
+# SheetNames = NULL
+# CheckCol = NULL
+# BlkBorders = TRUE
+# Source = TRUE
+# DgnNames = NULL
+# SheetTitle = NULL
+# NumLocs = TRUE
+# DgnType = TRUE
+# TotalPlots = TRUE
+# FieldDim = TRUE
+# NumDupl = TRUE
 
 ##### Function creation and usage #####
 # Function creation and argument designation
 design2xlsx <- function (
-  design, # A design output list from the FldTrial package
-  filename = "", #Filename to save the workbook as. Need to check to make sure .xlsx is appended as the file extension; defaults to "design_output" + system date/time
-  preview = FALSE, # Logical indicating whether to simply plot the design, with different colors for checks, to the console
+  design = NULL, # A design output list from the FldTrial package
+  filename = NULL, #Filename to save the workbook as. Need to check to make sure .xlsx is appended as the file extension; defaults to "design_output" + system date/time
   SheetNames = NULL, #Optional character vector of names to call the sheets in the workbook. Must adhere to excel sheet name rules (i.e. no special characters). Defaults to the environment name of each list. Length must be the same as the length of the list
   CheckCol = NULL, #Optional character vector of color names for the checks in order of the check number orders (defaults to the first n colors of rainbow)
   BlkBorders = TRUE, #Optional logical indicating whether borders should be drawn around the blocks
@@ -35,16 +38,19 @@ design2xlsx <- function (
 ) {
 
 
-  #Package requirements
+  # Function package requirements
   require(xlsx, quietly = T)
   
    
   ##### Usage checks, errors, return #####
-  if (filename == "") {filename = paste("design_output_", format(Sys.time(), "%d-%m-%Y-%H-%M-%S"), ".xlsx", sep = "")}
+  # Check the design input
+  if (is.null(design)) { 
+    stop("No design input given.")
+  } else {
+    if (!is.list(design)) stop("The x argument is not a list!")
+  }
   #Check to make sure the file name has the ".xlsx" extension
   if (!grepl(pattern = ".xlsx", x = filename)) stop("File does not have the .xlsx file extension")
-  #Make sure the entry file is a list
-  if (!is.list(design)) stop("The x argument is not a list!")
   #CheckCol errors
   if (!is.null(CheckCol)) {
     #Make sure that the length of the user-defined CheckCol vector is the same as the number of checks
@@ -112,6 +118,9 @@ design2xlsx <- function (
   #Set the names of the design list to the environment
   design.env <- as.character(unique(design[[1]]$environment))
   
+  # Pull out the type of design
+  design.type <- names(design)[1]
+  
   #Add "Row" to the column containing row numbers for the plot layout data.frame
   #Using an if statement to check to see if "Row" had already been added
   if (length(grep(pattern = "Row", x = design[[3]][,1][1])) == 0) {
@@ -138,7 +147,7 @@ design2xlsx <- function (
   
   #If the SheetNames vector is empty, create the sheet and name it according to the environment
   if (is.null(SheetNames)) {
-    main.sheet <- createSheet(wb = pdwb, sheetName = paste(unique(design[[1]]$environment), substring(text = names(design)[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(design)[1])[[1]][1]-1), "rand", sep = "_"))
+    main.sheet <- createSheet(wb = pdwb, sheetName = paste(unique(design[[1]]$environment), substring(text = design.type, first = 1, last = gregexpr(pattern = ".dgn", text = design.type)[[1]][1]-1), "rand", sep = "_"))
   #If not, then use the names given by the user
   } else {
     main.sheet <- createSheet(wb = pdwb, sheetName = SheetNames)
@@ -175,7 +184,7 @@ design2xlsx <- function (
       #Number of locations
         rows <- createRow(sheet = main.sheet, rowIndex = 2)
         pf_cell <- createCell(row = rows, colIndex = 2)
-        setCellValue(pf_cell[[1,1]], value = paste(length(design), "Locations:", paste(design.env, collapse = ", "), sep = " "))
+        setCellValue(pf_cell[[1,1]], value = paste("1 Location:", paste(design.env, collapse = ", "), sep = " "))
         setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
       }
       
@@ -185,7 +194,7 @@ design2xlsx <- function (
         #Type of design (ie aibd, madii, rcbd)
         rows <- createRow(sheet = main.sheet, rowIndex = 3 + (sum(Subtitles[1]) - 1))#This needs to be changed
         pf_cell <- createCell(row = rows, colIndex = 2)
-        setCellValue(pf_cell[[1,1]], value = paste("Design:", toupper(substring(text = names(design)[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(design)[1])[[1]][1]-1)), sep = " "))
+        setCellValue(pf_cell[[1,1]], value = paste("Design:", toupper(substring(text = design.type, first = 1, last = gregexpr(pattern = ".dgn", text = design.type)[[1]][1]-1)), sep = " "))
         setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
       }
       
@@ -382,7 +391,7 @@ design2xlsx <- function (
   if (BlkBorders == TRUE) {
     
     #If statement to check what design format is being used
-    if (substring(text = names(design)[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(design)[1])[[1]][1]-1) == "aibd" || substring(text = names(design)[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(design)[1])[[1]][1]-1) == "mad") {
+    if (substring(text = design.type, first = 1, last = gregexpr(pattern = ".dgn", text = design.type)[[1]][1]-1) == "aibd" || substring(text = design.type, first = 1, last = gregexpr(pattern = ".dgn", text = design.type)[[1]][1]-1) == "mad") {
     
       #Create numeric vector containing the block dimensions  
       blk_dim <- numeric()
@@ -423,7 +432,7 @@ design2xlsx <- function (
     } else { #Close the previous if statement and open and else + if statement
       
         #Border formatting for RCBD designs
-        if (substring(text = names(design)[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(design)[1])[[1]][1]-1) == "rcbd") {
+        if (substring(text = design.type, first = 1, last = gregexpr(pattern = ".dgn", text = design.type)[[1]][1]-1) == "rcbd") {
           
           #Create a border around the whole plot map first to simplify things later
           #First create a cellblock containing all of the cells
@@ -520,6 +529,13 @@ design2xlsx <- function (
 
 
   ##### Closing time #####
+  
+  # Choose a filename
+  if (is.null(filename)) {
+    filename <- paste(design.env, sub("\\.", "_", design.type), "output.xlsx", sep = "_")
+  }
+  
+  
   #Save the workbook to the disk
   saveWorkbook(wb = pdwb, file = filename)
   

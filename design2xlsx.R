@@ -90,7 +90,7 @@ design2xlsx <- function (
   pdwb <- createWorkbook()
   
   #Create a list for the sheets
-  sheetlist <- list()
+  main.sheet <- list()
   
   #If the SheetTitle is not user-defined, set it to the default
   if (is.null(SheetTitle)) {
@@ -138,10 +138,10 @@ design2xlsx <- function (
   
   #If the SheetNames vector is empty, create the sheet and name it according to the environment
   if (is.null(SheetNames)) {
-    sheetlist <- createSheet(wb = pdwb, sheetName = paste(unique(design[[1]]$environment), substring(text = names(design)[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(design)[1])[[1]][1]-1), "rand", sep = "_"))
+    main.sheet <- createSheet(wb = pdwb, sheetName = paste(unique(design[[1]]$environment), substring(text = names(design)[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(design)[1])[[1]][1]-1), "rand", sep = "_"))
   #If not, then use the names given by the user
   } else {
-    sheetlist <- createSheet(wb = pdwb, sheetName = SheetNames)
+    main.sheet <- createSheet(wb = pdwb, sheetName = SheetNames)
   }
   
   
@@ -154,7 +154,7 @@ design2xlsx <- function (
     #Title Cellstyle
     CS <- CS + Font(wb = pdwb, color = "#C65911", heightInPoints = 26, name = "Times New Roman", isBold = TRUE, underline = 1)
     #Add the title
-    rows <- createRow(sheet = sheetlist, rowIndex = 1)
+    rows <- createRow(sheet = main.sheet, rowIndex = 1)
     pf_cell <- createCell(row = rows, colIndex = 1)
     setCellValue(pf_cell[[1,1]], value = SheetTitle)
     setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -173,7 +173,7 @@ design2xlsx <- function (
       #Check if the subtitle is wanted
       if (NumLocs == TRUE) {
       #Number of locations
-        rows <- createRow(sheet = sheetlist, rowIndex = 2)
+        rows <- createRow(sheet = main.sheet, rowIndex = 2)
         pf_cell <- createCell(row = rows, colIndex = 2)
         setCellValue(pf_cell[[1,1]], value = paste(length(design), "Locations:", paste(design.env, collapse = ", "), sep = " "))
         setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -183,7 +183,7 @@ design2xlsx <- function (
       #Check if the subtitle is wanted
       if (DgnType == TRUE) {
         #Type of design (ie aibd, madii, rcbd)
-        rows <- createRow(sheet = sheetlist, rowIndex = 3 + (sum(Subtitles[1]) - 1))#This needs to be changed
+        rows <- createRow(sheet = main.sheet, rowIndex = 3 + (sum(Subtitles[1]) - 1))#This needs to be changed
         pf_cell <- createCell(row = rows, colIndex = 2)
         setCellValue(pf_cell[[1,1]], value = paste("Design:", toupper(substring(text = names(design)[1], first = 1, last = gregexpr(pattern = ".dgn", text = names(design)[1])[[1]][1]-1)), sep = " "))
         setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -195,7 +195,7 @@ design2xlsx <- function (
       #Check if subtitle is wanted
       if (TotalPlots == TRUE) {
         #Number of test plots
-        rows <- createRow(sheet = sheetlist, rowIndex = 3 + (sum(Subtitles[1:2]) - 1))#This needs to be changed
+        rows <- createRow(sheet = main.sheet, rowIndex = 3 + (sum(Subtitles[1:2]) - 1))#This needs to be changed
         pf_cell <- createCell(row = rows, colIndex = 2)
         setCellValue(pf_cell[[1,1]], value = paste(dim(design[[1]])[1], "Total test plots", sep = " "))
         setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -205,7 +205,7 @@ design2xlsx <- function (
       #Check if subtitle is wanted
       if (FieldDim == TRUE) {
         #Dimensions of plot
-        rows <- createRow(sheet = sheetlist, rowIndex = 3 + (sum(Subtitles[1:3]) - 1))#This needs to be changed
+        rows <- createRow(sheet = main.sheet, rowIndex = 3 + (sum(Subtitles[1:3]) - 1))#This needs to be changed
         pf_cell <- createCell(row = rows, colIndex = 2)
         setCellValue(pf_cell[[1,1]], value = paste(max(design[[1]]$row), "rows x", max(design[[1]]$column), "columns", sep = " "))
         setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -217,7 +217,7 @@ design2xlsx <- function (
         if (!is.null(x = design[[1]]$duplicates)) {
           #If the duplicates column is present, a number of duplicates cell group will be added
           #Number of duplicates
-          rows <- createRow(sheet = sheetlist, rowIndex = 3 + (sum(Subtitles[1:4]) - 1)) #This needs to be changed
+          rows <- createRow(sheet = main.sheet, rowIndex = 3 + (sum(Subtitles[1:4]) - 1)) #This needs to be changed
           pf_cell <- createCell(row = rows, colIndex = 2)
           setCellValue(pf_cell[[1,1]], value = paste(sum(design[[1]]$duplicates == "D"), "duplicate entries", sep = " "))
           setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS)
@@ -226,7 +226,7 @@ design2xlsx <- function (
   
       #This subtitle is always included
       #Cell specifying Number of checks
-      rows <- createRow(sheet = sheetlist, rowIndex = 3 + (sum(Subtitles[1:5]) - 1))#This needs to be changed
+      rows <- createRow(sheet = main.sheet, rowIndex = 3 + (sum(Subtitles[1:5]) - 1))#This needs to be changed
       pf_cell <- createCell(row = rows, colIndex = 2)
       setCellValue(pf_cell[[1,1]], value = paste(sum(design[[1]]$line.code != 0), "check plots:", sep = " "))
       setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS + Font(wb = pdwb, heightInPoints = 14, name = "Times New Roman", isItalic = TRUE, isBold = TRUE))
@@ -245,7 +245,7 @@ design2xlsx <- function (
   }
   
   for (i in 1:dim(checks_df)[1]) { #For loop to iterate through the number of checks
-    rows <- createRow(sheet = sheetlist, rowIndex = (sum(Subtitles) + 2) + i) #This 7 needs to be substituted with the number of rows requested in arguments
+    rows <- createRow(sheet = main.sheet, rowIndex = (sum(Subtitles) + 2) + i) #This 7 needs to be substituted with the number of rows requested in arguments
     checksumcell <- createCell(row = rows, colIndex = 3)
     checknamecell <- createCell(row = rows, colIndex = 4)
     setCellValue(checksumcell[[1,1]], value = sum(design[[1]]$line.code == i))
@@ -291,13 +291,13 @@ design2xlsx <- function (
   }
   
   #Add the dgn data.frame
-  addDataFrame(x = design_tempdf, sheet = sheetlist, col.names = TRUE, row.names = FALSE, startRow = (sum(Subtitles) + 2) + dim(checks_df)[1] + 2, colnamesStyle = CS)  #This 7 needs to be substituted with the number of rows requested in arguments
+  addDataFrame(x = design_tempdf, sheet = main.sheet, col.names = TRUE, row.names = FALSE, startRow = (sum(Subtitles) + 2) + dim(checks_df)[1] + 2, colnamesStyle = CS)  #This 7 needs to be substituted with the number of rows requested in arguments
   
   #Write the plot layout data to the worksheet
-  addDataFrame(x = as.data.frame(design[[3]]), sheet = sheetlist, col.names = FALSE, row.names = FALSE, startRow = 2, startColumn = dim(design_tempdf)[2] + 4)
+  addDataFrame(x = as.data.frame(design[[3]]), sheet = main.sheet, col.names = FALSE, row.names = FALSE, startRow = 2, startColumn = dim(design_tempdf)[2] + 4)
   
   #Write the check layout data to the worksheet
-  addDataFrame(x = as.data.frame(design[[4]]), sheet = sheetlist, col.names = FALSE, row.names = FALSE, startRow = (1 + dim(design[[3]])[1] + 4), startColumn = dim(design_tempdf)[2] + 4, colStyle = CellStyle(wb = pdwb, dataFormat = DataFormat(x = "0.0")))
+  addDataFrame(x = as.data.frame(design[[4]]), sheet = main.sheet, col.names = FALSE, row.names = FALSE, startRow = (1 + dim(design[[3]])[1] + 4), startColumn = dim(design_tempdf)[2] + 4, colStyle = CellStyle(wb = pdwb, dataFormat = DataFormat(x = "0.0")))
   
   
   
@@ -312,7 +312,7 @@ design2xlsx <- function (
     
     #Next, iterate through all rows of the design data.frame, check to see if the cell value is a check, then assign the appropriate cell style
     for (n in 1:dim(design[[1]])[1]) { #For loop to iterate through every row in the design data.frame
-      rows <- getRows(sheet = sheetlist, rowIndex = n + (sum(Subtitles) + 2) + dim(checks_df)[1] + 2) # 7 = number of rows taken up by pertinant primary info, dim(checks_df) = rows taken up by checks, 2 = space between checks and the data.frame  #This 7 needs to be substituted with the number of rows requested in arguments
+      rows <- getRows(sheet = main.sheet, rowIndex = n + (sum(Subtitles) + 2) + dim(checks_df)[1] + 2) # 7 = number of rows taken up by pertinant primary info, dim(checks_df) = rows taken up by checks, 2 = space between checks and the data.frame  #This 7 needs to be substituted with the number of rows requested in arguments
       #If line.code, line.name, and plot are not together, then only highlight line.name
       if (!is.na(match(NA, match(c(4,11,12), DgnNames)) > 0) || max(match(c(4,11,12), DgnNames)) - min(match(c(4,11,12), DgnNames)) > 2) {
         colin <- match(12, DgnNames)
@@ -354,7 +354,7 @@ design2xlsx <- function (
     #Highlighting check positions in the ploy.layout data.frame
     for (r in 1:(dim(design[[3]])[1]-1)) { #For loop to cycle through the number of rows
       for (k in 1:(dim(design[[3]])[2]-1)) { #For loop to cycle through the number of columns
-        rows <- getRows(sheet = sheetlist, rowIndex = r + 1) #
+        rows <- getRows(sheet = main.sheet, rowIndex = r + 1) #
         pf_cell <- getCells(row = rows, colIndex = (k + dim(design_tempdf)[2] + 4)) #MAY NEED TO CHANGE COLUMN INDEX FOR SOFT-CODING
         pf_value <- getCellValue(cell = pf_cell[[1]])
         
@@ -366,7 +366,7 @@ design2xlsx <- function (
     #Highlighting check positions in the check.layout data.frame
     for (r in 1:(dim(design[[4]])[1]-1)) { #For loop to cycle through the number of rows
       for (k in 1:(dim(design[[4]])[2]-1)) { #For loop to cycle through the number of columns
-        rows <- getRows(sheet = sheetlist, rowIndex = (r + dim(design[[3]])[1] + 4)) #
+        rows <- getRows(sheet = main.sheet, rowIndex = (r + dim(design[[3]])[1] + 4)) #
         pf_cell <- getCells(row = rows, colIndex = (k + dim(design_tempdf)[2] + 4)) #MAY NEED TO CHANGE COLUMN INDEX FOR SOFT-CODING
         pf_value <- getCellValue(cell = pf_cell[[1]])
         
@@ -395,7 +395,7 @@ design2xlsx <- function (
           
           #Manipulate the border of the blocks by creating cell blocks of the cells
           #Create a cell block that includes the cells in block 9 (for example)
-          cellblk1 <- CellBlock(sheet = sheetlist, #Designate the sheet
+          cellblk1 <- CellBlock(sheet = main.sheet, #Designate the sheet
                                 startRow = (2 + ((r-1) * blk_dim[1])), #The plot layout will usually start in row 2
                                 startColumn = ((dim(design_tempdf)[2] + 4 + 1) + ((k-1) * blk_dim[2])), #Start column is the same as the start column that was used for placing the plot.layout data + 1 to exclude the row names
                                 noRows = blk_dim[1],
@@ -427,7 +427,7 @@ design2xlsx <- function (
           
           #Create a border around the whole plot map first to simplify things later
           #First create a cellblock containing all of the cells
-          cellblk1 <- CellBlock(sheet = sheetlist, #Designate the sheet
+          cellblk1 <- CellBlock(sheet = main.sheet, #Designate the sheet
                                 startRow = 2, #The plot layout will usually start in row 2 
                                 startColumn = ((dim(design_tempdf)[2] + 4 + 1)), #Start column is the same as the start column that was used for placing the plot.layout data + 1 to exclude the row names
                                 noRows = (dim(design[[3]]) - 1)[1], #Number of rows is the number of rows in the field design
@@ -459,7 +459,7 @@ design2xlsx <- function (
             for (k in 1:max(design[[1]]$column)) { #For loop to cycle through the number of cols
               
               #Create a cellblock with just one cell
-              cellblk1 <- CellBlock(sheet = sheetlist, #Designate the sheet
+              cellblk1 <- CellBlock(sheet = main.sheet, #Designate the sheet
                                     startRow = (r + 1), #The plot layout will usually start in row 2 
                                     startColumn = (k + dim(design_tempdf)[2] + 4), #Start column is the same as the start column that was used for placing the plot.layout data + 1 to exclude the row names
                                     noRows = 1, #Number of rows is the number of rows in the field design
@@ -492,17 +492,29 @@ design2xlsx <- function (
     } #Close the else statement
   } #Close the BlkBorders if statement
 
-
+  
+  # Create sheets for the fieldbook information
+  field.design.sheet <- createSheet(wb = pdwb, sheetName = "field.design")
+  addDataFrame(x = design[[1]], sheet = field.design.sheet, col.names = T, row.names = F, startRow = 1, startColumn = 1)
+  
+  field.book.sheet <- createSheet(wb = pdwb, sheetName = "field.book")
+  # Add the field.book data.frame
+  addDataFrame(x = design$field.book, sheet = field.book.sheet, col.names = T, row.names = F, startRow = 1, startColumn = 1)
+  
 
   ##### Post-Formatting #####
   #Autosize columns
-  autoSizeColumn(sheet = sheetlist, colIndex = c(3:(dim(design[[4]])[2] + dim(design_tempdf)[2] + 4)))
+  autoSizeColumn(sheet = main.sheet, colIndex = c(3:(dim(design[[4]])[2] + dim(design_tempdf)[2] + 4)))
+  autoSizeColumn(sheet = field.design.sheet, colIndex = 1:ncol(design[[1]]))
+  autoSizeColumn(sheet = field.book.sheet, colIndex = 1:ncol(design$field.book))
   
   #Set the zoom
-  setZoom(sheet = sheetlist, numerator = 85, denominator = 100)
+  setZoom(sheet = main.sheet, numerator = 85, denominator = 100)
+  setZoom(sheet = field.design.sheet, numerator = 85, denominator = 100)
+  setZoom(sheet = field.book.sheet, numerator = 85, denominator = 100)
   
   #Manual column widths
-  setColumnWidth(sheet = sheetlist, colIndex = 1, colWidth = 11)
+  setColumnWidth(sheet = main.sheet, colIndex = 1, colWidth = 11)
 
 
 

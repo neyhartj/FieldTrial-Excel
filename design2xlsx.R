@@ -128,8 +128,8 @@ design2xlsx <- function (
   }
   #Extract the checks
   checks_df <- data.frame()
-  for (i in 1:max(design[[1]]$line.code)) {
-    checks_df[i,1] <- sum(design[[1]]$line.code == i)
+  for (i in 1:max(design[[1]]$line.code, na.rm = T)) {
+    checks_df[i,1] <- sum(design[[1]]$line.code == i, na.rm = T)
     checks_df[i,2] <- unique(design[[1]]$line.name[which(design[[1]]$line.code == i)])
   }
   
@@ -237,7 +237,7 @@ design2xlsx <- function (
       #Cell specifying Number of checks
       rows <- createRow(sheet = main.sheet, rowIndex = 3 + (sum(Subtitles[1:5]) - 1))#This needs to be changed
       pf_cell <- createCell(row = rows, colIndex = 2)
-      setCellValue(pf_cell[[1,1]], value = paste(sum(design[[1]]$line.code != 0), "check plots:", sep = " "))
+      setCellValue(pf_cell[[1,1]], value = paste(sum(design[[1]]$line.code != 0, na.rm = T), "check plots:", sep = " "))
       setCellStyle(cell = pf_cell[[1,1]], cellStyle = CS + Font(wb = pdwb, heightInPoints = 14, name = "Times New Roman", isItalic = TRUE, isBold = TRUE))
       
       
@@ -257,7 +257,7 @@ design2xlsx <- function (
     rows <- createRow(sheet = main.sheet, rowIndex = (sum(Subtitles) + 2) + i) #This 7 needs to be substituted with the number of rows requested in arguments
     checksumcell <- createCell(row = rows, colIndex = 3)
     checknamecell <- createCell(row = rows, colIndex = 4)
-    setCellValue(checksumcell[[1,1]], value = sum(design[[1]]$line.code == i))
+    setCellValue(checksumcell[[1,1]], value = sum(design[[1]]$line.code == i, na.rm = T))
     setCellValue(checknamecell[[1,1]], value = unique(design[[1]]$line.name[which(design[[1]]$line.code == i)]))
     setCellStyle(cell = checksumcell[[1,1]], cellStyle = CS + Fill(foregroundColor = CheckCol[i], backgroundColor = "white"))
     setCellStyle(cell = checknamecell[[1,1]], cellStyle = CS + Fill(foregroundColor = CheckCol[i], backgroundColor = "white"))

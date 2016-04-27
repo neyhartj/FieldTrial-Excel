@@ -64,7 +64,7 @@
 
 
 ## Should there be a rect.blocks options? So each block is its own rectangle, i.e. transition isn't in the middle of a row
-design.rcbd <- function(enviro=format(Sys.Date(), "%x"), exp.name=NULL, nBlks=2, entries= NULL, nEntries= NULL, chks=NULL, nChks=NULL, nChkReps=1, nFieldRows=NULL, nFieldCols=NULL, plot.start=1001, fillWithEntry=T, dup.list=NULL, fillWithChk=F, output.excel = F) {
+design.rcbd <- function(enviro=Sys.Date(), exp.name=NULL, nBlks=2, entries= NULL, nEntries= NULL, chks=NULL, nChks=NULL, nChkReps=1, nFieldRows=NULL, nFieldCols=NULL, plot.start=1001, fillWithEntry=T, dup.list=NULL, fillWithChk=F, output.excel = F) {
   
   ## QC
   if(is.null(entries) & is.null(nEntries)) stop("Must provide an entry list (entries=) OR the number of entries desired (nEntries=).")
